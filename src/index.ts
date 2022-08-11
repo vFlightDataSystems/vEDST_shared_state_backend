@@ -18,11 +18,12 @@ app.use(bodyParser.json());
 
 type Sector = {
     id: string
+    timeModified: number
     aircraft: Aircraft[]
 }
 
 type Aircraft = {
-    id: number
+    cid: number
     highlighted: boolean
     freetext: string
 }
@@ -30,9 +31,10 @@ type Aircraft = {
 let sectors: Sector[] = [
     {
         id: 'ZLC-33',
+        timeModified: 1660175685,
         aircraft: [
             {
-                id: 588,
+                cid: 588,
                 highlighted: true,
                 freetext: 'hi'
             }
@@ -40,32 +42,104 @@ let sectors: Sector[] = [
     }
 ]
 
-let sectorIndexes: string[] = [];
+/**
+ * Finds index of sectors in sectors array
+ * @param sector Sector ID to find
+ * @returns Index in sectors array
+ */
+function getSectorIndex(sector: string): number {
+    let indexes: string[] = [];
+    sectors.forEach(sec => indexes.push(sec.id));
 
-function updateSectorIndexes() {
-    sectors.forEach(sec => sectorIndexes.push(sec.id));
+    return indexes.findIndex(sectorId => sectorId === sector);
+}
+
+/**
+ * Finds index of aircraft in its sector's array
+ * @param cid CID to find
+ * @param sector Sector that possses aircraft
+ * @returns Index in sector's aircraft array
+ */
+function getAircraftIndex(cid: number, sector: string): number {
+    let indexes: number[] = [];
+    sectors[getSectorIndex(sector)].aircraft.forEach(ac => indexes.push(ac.cid));
+
+    return indexes.findIndex(aircraftId => aircraftId === cid);
+
 }
 
 app.listen(port, () => console.log('Listening on port ' + port))
 
 /**
- * Return all aircraft for one sector
+ * Return all aircraft or time modified for one sector
  */
-app.get('/:sector/', (req, res) => {
+app.get('/:sector/:info', (req, res) => {
     const sector: string = req.params.sector;
-    updateSectorIndexes();
-    let sectorIndex: number = sectorIndexes.findIndex(sectorId => sectorId === sector);
+    const info: string = req.params.info;
+    let sectorIndex: number = getSectorIndex(sector);
     if (sectorIndex === -1) {
         res.send("No such sector");
         return;
     }
 
-    const aircraft = sectors[sectorIndex].aircraft;
+    switch (info) {
+        default:
+            res.send("No such info");
+            break;
+        case 'time':
+            res.send(sectors[sectorIndex].timeModified);
+            break;
+        case 'aircraft':
+            const aircraft = sectors[sectorIndex].aircraft;
+            if (aircraft.length == 0) {
+                res.send(null);
+                return;
+            }
 
-    if (aircraft.length == 0) {
-        res.send(null);
+            res.send(aircraft);
+            break;
+    }
+})
+
+/**
+ * Return one specific aircraft in one sector
+ */
+app.get('/:sector/:cid/', (req, res) => {
+    const sector: string = req.params.sector;
+    const cid: number = parseInt(req.params.cid);
+    let aircraftIndex: number = getAircraftIndex(cid, sector);
+    if (aircraftIndex === -1) {
+        res.send("No such aircraft");
         return;
     }
 
-    res.send(aircraft);
+    res.send(sectors[aircraftIndex].aircraft[aircraftIndex]);
+})
+
+/**
+ * Return freetext or highlighted status for one specific aircraft in one sector
+ */
+app.get('/:sector/:cid/:info', (req, res) => {
+    const sector: string = req.params.sector;
+    const cid: number = parseInt(req.params.cid);
+    const info: string = req.params.info;
+
+    const aircraftIndex: number = getAircraftIndex(cid, sector);
+    if (aircraftIndex === -1) {
+        res.send("No such aircraft");
+        return;
+    }
+    const ac = sectors[aircraftIndex].aircraft[aircraftIndex];
+
+    switch (info) {
+        default:
+            res.send("No such info")
+            break;
+        case 'freetext':
+            res.send(ac.freetext);
+            break;
+        case 'highlighted':
+            res.send(ac.highlighted);
+            break;
+    }
 })
