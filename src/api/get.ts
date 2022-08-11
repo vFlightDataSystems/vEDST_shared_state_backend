@@ -10,7 +10,7 @@ const router = express.Router();
 /**
  * Return all aircraft or time modified for one sector
  */
-router.get('/:sector/:info', (req, res) => {
+router.get('/:sector/sec/:info', (req, res) => {
     const sector: string = req.params.sector;
     const info: string = req.params.info;
     let sectorIndex: number = getSectorIndex(sector);
@@ -41,7 +41,7 @@ router.get('/:sector/:info', (req, res) => {
 /**
  * Return one specific aircraft in one sector
  */
-router.get('/:sector/:cid/', (req, res) => {
+router.get('/:sector/ac/:cid/', (req, res) => {
     const sector: string = req.params.sector;
     const cid: number = parseInt(req.params.cid);
     let aircraftIndex: number = getAircraftIndex(cid, sector);
@@ -56,7 +56,7 @@ router.get('/:sector/:cid/', (req, res) => {
 /**
  * Return freetext or highlighted status for one specific aircraft in one sector
  */
-router.get('/:sector/:cid/:info', (req, res) => {
+router.get('/:sector/ac/:cid/:info', (req, res) => {
     const sector: string = req.params.sector;
     const cid: number = parseInt(req.params.cid);
     const info: string = req.params.info;
