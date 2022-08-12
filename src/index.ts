@@ -6,6 +6,8 @@ import express from 'express';
 import bodyParser from 'body-parser';
 
 const app: express.Application = express();
+const http = require('http');
+const server = http.createServer(app);
 const port: number = 3000;
 
 // Configure body-parser
@@ -15,6 +17,7 @@ app.use(bodyParser.json());
 type Sector = {
     id: string
     timeModified: number
+    timeoutFlagged: boolean
     aircraft: Aircraft[]
 }
 
@@ -24,19 +27,9 @@ type Aircraft = {
     freetext: string
 }
 
-export let sectors: Sector[] = [
-    {
-        id: 'ZLC-33',
-        timeModified: 1660175685,
-        aircraft: [
-            {
-                cid: 588,
-                highlighted: true,
-                freetext: 'hi'
-            }
-        ]
-    }
-]
+export let sectors: Sector[] = []
+
+export let activeUsers: Map<string, string> = new Map<string, string>();
 
 /**
  * Finds index of sectors in sectors array
@@ -64,7 +57,27 @@ export function getAircraftIndex(cid: number, sector: string): number {
 
 }
 
+/**
+ * Removes keys in activeUsers that have the value 'null' or are undefined
+ */
+export function cleanActiveUsers() {
+    let arr: Map<string, string> = new Map<string, string>();
+
+    Array.from(activeUsers.keys()).forEach((key: string) => {
+        const val = activeUsers.get(key);
+        if (val != undefined && val != 'null') {
+            arr.set(key, val);
+        }
+    })
+
+    activeUsers = arr;
+}
+
 // Use GET routes from api/get.ts
 app.use('/', require('./api/get.ts'));
+// Use websocket code from api/sockets.ts
+require('./api/sockets.ts')(server)
 
-app.listen(port, () => console.log('Listening on port ' + port))
+server.listen(port, () =>{
+    console.log('Listening on port ' + port)
+})

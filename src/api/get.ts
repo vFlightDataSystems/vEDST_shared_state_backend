@@ -3,7 +3,7 @@
  */
 
 import express from 'express';
-import {getSectorIndex, getAircraftIndex, sectors, } from "../index";
+import {getSectorIndex, getAircraftIndex, sectors} from "../index";
 
 const router = express.Router();
 
