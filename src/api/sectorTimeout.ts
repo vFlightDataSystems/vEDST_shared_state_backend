@@ -2,7 +2,7 @@
  * @author Cian Ormond <co@cianormond.com>
  */
 
-import {activeUsers, getSectorIndex, sectors} from "../index";
+import {activeUsers, sectors} from "../index";
 
 export let intervals: Map<string, NodeJS.Timer> = new Map<string, NodeJS.Timer>();
 
@@ -20,19 +20,18 @@ export function canFlagTimeout(sector: string): boolean {
  * @param sector Sector to flag for timeout
  */
 export function flagTimeout(sector: string) {
-    sectors[getSectorIndex(sector)].timeoutFlagged = true;
+    sectors[sector].timeoutFlagged = true;
     intervals.set(sector, setInterval(() => checkTimeoutCountdown(sector), 6000));
 }
 
 /**
- * Checks if sector should be removed, disflagged or left as is
+ * Checks if sector should be removed, isflagged or left as is
  * @param sector Sector to check for timeout
  */
 function checkTimeoutCountdown(sector: string) {
-    const sectorIndex = getSectorIndex(sector);
     const interval = intervals.get(sector);
 
-    if (!sectors[sectorIndex].timeoutFlagged) {
+    if (!sectors[sector].timeoutFlagged) {
         clearInterval(interval);
         return;
     }
@@ -42,20 +41,20 @@ function checkTimeoutCountdown(sector: string) {
         return;
     }
 
-    const timeModified = sectors[sectorIndex].timeModified;
+    const timeModified = sectors[sector].timeModified;
     if (Date.now() < timeModified + 1800) return;
     else {
         if (interval != undefined)
-            timeout(sectorIndex, interval);
+            timeout(sector, interval);
     }
 }
 
 /**
  * Removes sector
- * @param sectorIndex Index of sector to remove
+ * @param sector sector to remove
  * @param interval ID of interval
  */
-function timeout(sectorIndex: number, interval: NodeJS.Timer) {
+function timeout(sector: string, interval: NodeJS.Timer) {
     clearInterval(interval);
-    sectors.splice(sectorIndex, sectorIndex + 1);
+    delete sectors[sector];
 }

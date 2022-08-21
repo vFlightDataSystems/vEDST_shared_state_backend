@@ -3,7 +3,7 @@
  */
 
 import express from 'express';
-import {getSectorIndex, getAircraftIndex, sectors} from "../index";
+import {sectors} from "../index";
 
 const router = express.Router();
 
@@ -13,72 +13,65 @@ const router = express.Router();
 router.get('/:sector/sec/:info', (req, res) => {
     const sector: string = req.params.sector;
     const info: string = req.params.info;
-    let sectorIndex: number = getSectorIndex(sector);
-    if (sectorIndex === -1) {
+    if (!sectors[sector]) {
         res.send("No such sector");
-        return;
-    }
+    } else {
+        switch (info) {
+            default:
+                res.send("No such info");
+                break;
+            case 'time':
+                res.send(sectors[sector].timeModified.toString());
+                break;
+            case 'aircraft':
+                const aircraft = sectors[sector].aircraft;
+                if (Object.keys(aircraft)) {
+                    res.send(null);
+                    return;
+                }
 
-    switch (info) {
-        default:
-            res.send("No such info");
-            break;
-        case 'time':
-            res.send(sectors[sectorIndex].timeModified.toString());
-            break;
-        case 'aircraft':
-            const aircraft = sectors[sectorIndex].aircraft;
-            if (aircraft.length == 0) {
-                res.send(null);
-                return;
-            }
-
-            res.send(aircraft);
-            break;
+                res.send(aircraft);
+                break;
+        }
     }
 })
 
 /**
  * Return one specific aircraft in one sector
  */
-router.get('/:sector/ac/:cid/', (req, res) => {
+router.get('/:sector/ac/:aircraftId/', (req, res) => {
     const sector: string = req.params.sector;
-    const cid: number = parseInt(req.params.cid);
-    let aircraftIndex: number = getAircraftIndex(cid, sector);
-    if (aircraftIndex === -1) {
-        res.send("No such aircraft");
-        return;
-    }
+    const ac = sectors[sector]?.aircraft?.[req.params.aircraftId];
 
-    res.send(sectors[aircraftIndex].aircraft[aircraftIndex]);
+    res.send(ac ?? "No such aircraft");
 })
 
 /**
  * Return freetext or highlighted status for one specific aircraft in one sector
  */
-router.get('/:sector/ac/:cid/:info', (req, res) => {
+router.get('/:sector/ac/:aircraftId/:info', (req, res) => {
     const sector: string = req.params.sector;
-    const cid: number = parseInt(req.params.cid);
     const info: string = req.params.info;
+    const ac = sectors[sector]?.aircraft?.[req.params.aircraftId];
 
-    const aircraftIndex: number = getAircraftIndex(cid, sector);
-    if (aircraftIndex === -1) {
+    if (!ac) {
         res.send("No such aircraft");
-        return;
     }
-    const ac = sectors[aircraftIndex].aircraft[aircraftIndex];
+    else {
+        switch (info) {
+            default:
+                res.send("No such info")
+                break;
+            case 'freetext':
+                res.send(ac.freetext);
+                break;
+            case 'highlighted':
+                res.send(ac.highlighted);
+                break;
+        }
+    }
 
-    switch (info) {
-        default:
-            res.send("No such info")
-            break;
-        case 'freetext':
-            res.send(ac.freetext);
-            break;
-        case 'highlighted':
-            res.send(ac.highlighted);
-            break;
-    }
+
 })
 
 module.exports = router;
