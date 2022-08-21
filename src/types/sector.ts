@@ -1,4 +1,4 @@
-import { Aircraft } from "./aircraft";
+import { Aircraft } from "./aircraftDto";
 
 export type Sector = {
   sectorId: string
