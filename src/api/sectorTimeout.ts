@@ -43,7 +43,7 @@ function checkTimeoutCountdown(sector: string) {
     }
 
     const timeModified = sectors[sectorIndex].timeModified;
-    if (Date.now() < timeModified + 5) return;
+    if (Date.now() < timeModified + 1800) return;
     else {
         if (interval != undefined)
             timeout(sectorIndex, interval);
