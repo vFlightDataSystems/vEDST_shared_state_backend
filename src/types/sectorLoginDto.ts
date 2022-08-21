@@ -1,4 +1,4 @@
 export type SectorLoginDto = {
-  sector: string;
+  sectorId: string;
   authToken: string;
 }

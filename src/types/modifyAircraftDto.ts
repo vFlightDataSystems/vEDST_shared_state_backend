@@ -1,5 +1,5 @@
 export type ModifyAircraftDto<T> = {
-  sector: string;
+  sectorId: string;
   aircraftId: string;
   value: T
 }

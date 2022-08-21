@@ -8,12 +8,12 @@ import {sectors} from "../index";
 const router = express.Router();
 
 /**
- * Return all aircraft or time modified for one sector
+ * Return all aircraft or time modified for one sectorId
  */
-router.get('/:sector/sec/:info', (req, res) => {
-    const sector: string = req.params.sector;
+router.get('/:sectorId/sec/:info', (req, res) => {
+    const sectorId: string = req.params.sectorId;
     const info: string = req.params.info;
-    if (!sectors[sector]) {
+    if (!sectors[sectorId]) {
         res.send("No such sector");
     } else {
         switch (info) {
@@ -21,10 +21,10 @@ router.get('/:sector/sec/:info', (req, res) => {
                 res.send("No such info");
                 break;
             case 'time':
-                res.send(sectors[sector].timeModified.toString());
+                res.send(sectors[sectorId].timeModified.toString());
                 break;
             case 'aircraft':
-                const aircraft = sectors[sector].aircraft;
+                const aircraft = sectors[sectorId].aircraft;
                 if (Object.keys(aircraft)) {
                     res.send(null);
                     return;
@@ -37,22 +37,22 @@ router.get('/:sector/sec/:info', (req, res) => {
 })
 
 /**
- * Return one specific aircraft in one sector
+ * Return one specific aircraft in one sectorId
  */
-router.get('/:sector/ac/:aircraftId/', (req, res) => {
-    const sector: string = req.params.sector;
-    const ac = sectors[sector]?.aircraft?.[req.params.aircraftId];
+router.get('/:sectorId/ac/:aircraftId/', (req, res) => {
+    const sectorId: string = req.params.sectorId;
+    const ac = sectors[sectorId]?.aircraft?.[req.params.aircraftId];
 
     res.send(ac ?? "No such aircraft");
 })
 
 /**
- * Return freetext or highlighted status for one specific aircraft in one sector
+ * Return freetext or highlighted status for one specific aircraft in one sectorId
  */
-router.get('/:sector/ac/:aircraftId/:info', (req, res) => {
-    const sector: string = req.params.sector;
+router.get('/:sectorId/ac/:aircraftId/:info', (req, res) => {
+    const sectorId: string = req.params.sectorId;
     const info: string = req.params.info;
-    const ac = sectors[sector]?.aircraft?.[req.params.aircraftId];
+    const ac = sectors[sectorId]?.aircraft?.[req.params.aircraftId];
 
     if (!ac) {
         res.send("No such aircraft");

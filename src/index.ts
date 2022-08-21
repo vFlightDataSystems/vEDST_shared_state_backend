@@ -5,12 +5,14 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import { Sector } from "./types/sector";
-
-require('dotenv').config();
+import socket from "./api/sockets";
+import { Server } from "http";
+import dotenv from "dotenv";
+dotenv.config();
 
 const app: express.Application = express();
 const http = require('http');
-const server = http.createServer(app);
+const server: Server = http.createServer(app);
 const port: number = 4000;
 
 // Configure body-parser
@@ -24,7 +26,7 @@ export let activeUsers = new Map<string, string>();
 // Use GET routes from api/get.ts
 app.use('/', require('./api/get.ts'));
 // Use websocket code from api/sockets.ts
-require('./api/sockets.ts')(server)
+socket(server);
 
 server.listen(port, () =>{
     console.log('Listening on port ' + port)

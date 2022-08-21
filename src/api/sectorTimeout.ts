@@ -7,54 +7,54 @@ import {activeUsers, sectors} from "../index";
 export let intervals: Map<string, NodeJS.Timer> = new Map<string, NodeJS.Timer>();
 
 /**
- * Checks if sector is ready to be flagged for timeout
- * @param sector Sector to flag for timeout
+ * Checks if sectorId is ready to be flagged for timeout
+ * @param sectorId Sector to flag for timeout
  * @returns
  */
-export function canFlagTimeout(sector: string): boolean {
-    return !activeUsers.has(sector);
+export function canFlagTimeout(sectorId: string): boolean {
+    return !activeUsers.has(sectorId);
 }
 
 /**
- * Starts countdown to remove sector after 30 mins
- * @param sector Sector to flag for timeout
+ * Starts countdown to remove sectorId after 30 mins
+ * @param sectorId Sector to flag for timeout
  */
-export function flagTimeout(sector: string) {
-    sectors[sector].timeoutFlagged = true;
-    intervals.set(sector, setInterval(() => checkTimeoutCountdown(sector), 6000));
+export function flagTimeout(sectorId: string) {
+    sectors[sectorId].timeoutFlagged = true;
+    intervals.set(sectorId, setInterval(() => checkTimeoutCountdown(sectorId), 6000));
 }
 
 /**
- * Checks if sector should be removed, isflagged or left as is
- * @param sector Sector to check for timeout
+ * Checks if sectorId should be removed, isflagged or left as is
+ * @param sectorId Sector to check for timeout
  */
-function checkTimeoutCountdown(sector: string) {
-    const interval = intervals.get(sector);
+function checkTimeoutCountdown(sectorId: string) {
+    const interval = intervals.get(sectorId);
 
-    if (!sectors[sector].timeoutFlagged) {
+    if (!sectors[sectorId].timeoutFlagged) {
         clearInterval(interval);
         return;
     }
 
-    if (activeUsers.has(sector)) {
+    if (activeUsers.has(sectorId)) {
         clearInterval(interval);
         return;
     }
 
-    const timeModified = sectors[sector].timeModified;
+    const timeModified = sectors[sectorId].timeModified;
     if (Date.now() < timeModified + 1800) return;
     else {
         if (interval != undefined)
-            timeout(sector, interval);
+            timeout(sectorId, interval);
     }
 }
 
 /**
- * Removes sector
- * @param sector sector to remove
+ * Removes sectorId
+ * @param sectorId sectorId to remove
  * @param interval ID of interval
  */
-function timeout(sector: string, interval: NodeJS.Timer) {
+function timeout(sectorId: string, interval: NodeJS.Timer) {
     clearInterval(interval);
-    delete sectors[sector];
+    delete sectors[sectorId];
 }

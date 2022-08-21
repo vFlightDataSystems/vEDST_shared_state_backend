@@ -3,71 +3,90 @@
  */
 
 import { Server, Socket } from "socket.io";
+import { Server as HttpServer } from "http";
 import { activeUsers, sectors } from "../index";
 import { canFlagTimeout, flagTimeout } from "./sectorTimeout";
 import { SectorLoginDto } from "../types/sectorLoginDto";
 import { ModifyAircraftDto } from "../types/modifyAircraftDto";
+import { Sector } from "../types/sector";
+import { Aircraft } from "../types/aircraft";
 
-module.exports = function(server: Server) {
+interface ClientToServerEvents {
+    sectorLogon: (payload: SectorLoginDto, callback?: (arg: Record<string, Sector>) => void) => void;
+    setHighlight: (payload: ModifyAircraftDto<boolean>) => void;
+    setFreeText: (payload: ModifyAircraftDto<string>) => void;
+}
 
-    const { Server } = require("socket.io");
-    const io = new Server(server, {
+interface ServerToClientEvents {
+    receiveAircraft: (aircraft: Aircraft) => void
+}
+
+export default function(server: HttpServer) {
+
+    const io = new Server<ClientToServerEvents, ServerToClientEvents, any, unknown>(server, {
         cors: {
             origin: process.env.corsOrigin,
         }
     });
     io.on('connection', (socket: Socket) => {
+        console.log(socket);
+
+        if (socket.handshake.auth?.token !== process.env.authToken) {
+            socket.disconnect();
+        }
 
         const userInfo = {
-            "id": socket.id,
-            "sector": ""
+            id: socket.id,
+            sectorId: ""
         };
 
-        socket.on('sectorLogon', (res: SectorLoginDto, callback?: (arg: any) => void) => {
-            userInfo.sector = res.sector;
-            activeUsers.set(userInfo.id, userInfo.sector);
-            if (!sectors[userInfo.sector]) {
-                sectors[userInfo.sector] = {
-                    'id': userInfo.sector, timeModified: Date.now(), timeoutFlagged: false, aircraft: {}
+        socket.on('sectorLogon', (sectorId: string, callback?: (arg: any) => void) => {
+            userInfo.sectorId = sectorId;
+            activeUsers.set(userInfo.id, userInfo.sectorId);
+            if (!sectors[userInfo.sectorId]) {
+                sectors[userInfo.sectorId] = {
+                    'id': userInfo.sectorId, timeModified: Date.now(), timeoutFlagged: false, aircraft: {}
                 };
             }
-            callback?.(sectors[userInfo.sector]);
+            callback?.(sectors[userInfo.sectorId]);
         });
 
-        socket.on('setHighlight', ({sector, aircraftId, value}: ModifyAircraftDto<boolean>) => {
-            if (Object.keys(sectors[userInfo.sector].aircraft).includes(aircraftId)) {
-                sectors[userInfo.sector].aircraft[aircraftId].highlighted = value;
+        socket.on('setHighlight', ({sectorId, aircraftId, value}: ModifyAircraftDto<boolean>) => {
+            if (Object.keys(sectors[userInfo.sectorId].aircraft).includes(aircraftId)) {
+                sectors[userInfo.sectorId].aircraft[aircraftId].highlighted = value;
             } else {
-                sectors[userInfo.sector].aircraft[aircraftId] = {
+                sectors[userInfo.sectorId].aircraft[aircraftId] = {
                     aircraftId,
                     highlighted: value,
                     freetext: ''
                 };
             }
 
-            sectors[sector].timeModified = Date.now();
-            socket.broadcast.emit("receiveAircraft", sectors[sector].aircraft[aircraftId]);
+            sectors[sectorId].timeModified = Date.now();
+            socket.broadcast.emit("receiveAircraft", sectors[sectorId].aircraft[aircraftId]);
         });
 
-        socket.on('setFreeText', ({sector, aircraftId, value}: ModifyAircraftDto<string>) => {
-            if (Object.keys(sectors[userInfo.sector].aircraft).includes(aircraftId)) {
-                sectors[userInfo.sector].aircraft[aircraftId].freetext = value;
+        socket.on('setFreeText', ({sectorId, aircraftId, value}: ModifyAircraftDto<string>) => {
+            if (Object.keys(sectors[userInfo.sectorId].aircraft).includes(aircraftId)) {
+                sectors[userInfo.sectorId].aircraft[aircraftId].freetext = value;
             } else {
-                sectors[userInfo.sector].aircraft[aircraftId] = {
+                sectors[userInfo.sectorId].aircraft[aircraftId] = {
                     aircraftId,
                     highlighted: false,
                     freetext: value
                 };
             }
 
-            sectors[sector].timeModified = Date.now();
-            socket.broadcast.emit("receiveAircraft", sectors[sector].aircraft[aircraftId]);
+            sectors[sectorId].timeModified = Date.now();
+            socket.broadcast.emit("receiveAircraft", sectors[sectorId].aircraft[aircraftId]);
         })
 
         socket.on('disconnect', () => {
-            sectors[userInfo.sector].timeModified = Date.now();
-            if (canFlagTimeout(userInfo.sector)) {
-                flagTimeout(userInfo.sector);
+            if (sectors[userInfo.sectorId]) {
+                sectors[userInfo.sectorId].timeModified = Date.now();
+                if (canFlagTimeout(userInfo.sectorId)) {
+                    flagTimeout(userInfo.sectorId);
+                }
             }
             activeUsers.delete(userInfo.id);
         });
