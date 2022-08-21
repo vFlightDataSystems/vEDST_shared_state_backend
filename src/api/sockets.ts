@@ -40,12 +40,12 @@ export default function(server: HttpServer) {
             sectorId: ""
         };
 
-        socket.on('sectorLogon', (sectorId: string, callback?: (arg: any) => void) => {
+        socket.on('sectorLogon', (sectorId, callback) => {
             userInfo.sectorId = sectorId;
             activeUsers.set(userInfo.id, userInfo.sectorId);
             if (!sectors[userInfo.sectorId]) {
                 sectors[userInfo.sectorId] = {
-                    'id': userInfo.sectorId, timeModified: Date.now(), timeoutFlagged: false, aircraft: {}
+                    sectorId: userInfo.sectorId, timeModified: Date.now(), timeoutFlagged: false, aircraft: {}
                 };
             }
             callback?.(sectors[userInfo.sectorId]);
