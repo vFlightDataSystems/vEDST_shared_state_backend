@@ -31,7 +31,7 @@ export function flagTimeout(sectorId: string) {
 function checkTimeoutCountdown(sectorId: string) {
     const interval = intervals.get(sectorId);
 
-    if (!sectors[sectorId].timeoutFlagged) {
+    if (!sectors[sectorId]?.timeoutFlagged) {
         clearInterval(interval);
         return;
     }

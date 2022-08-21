@@ -5,7 +5,6 @@ export type AircraftDto = {
   aclDeleted: boolean;
   depDisplay: boolean;
   depDeleted: boolean;
-  highlighted: boolean;
   vciStatus: -1 | 0 | 1;
   depStatus: -1 | 0 | 1;
   aclHighlighted: boolean;

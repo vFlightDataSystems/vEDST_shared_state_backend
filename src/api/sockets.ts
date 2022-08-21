@@ -42,9 +42,11 @@ export default function(server: HttpServer) {
             };
         }
 
+        Object.values(sectors[userInfo.sectorId].aircraft).forEach(aircraft => emitAircraftToRoom(aircraft));
+
         socket.join(userInfo.sectorId);
 
-        function emitAircraft(aircraftId: string) {
+        function emitAircraftToRoom(aircraftId: string) {
             io.to(userInfo.sectorId).emit("receiveAircraft", sectors[userInfo.sectorId].aircraft[aircraftId])
         }
 
@@ -52,7 +54,7 @@ export default function(server: HttpServer) {
                 sectors[userInfo.sectorId].aircraft[aircraft.aircraftId] = aircraft;
 
             sectors[sectorId].timeModified = Date.now();
-            emitAircraft(aircraft.aircraftId);
+            emitAircraftToRoom(aircraft.aircraftId);
         });
 
         socket.on('disconnect', () => {
