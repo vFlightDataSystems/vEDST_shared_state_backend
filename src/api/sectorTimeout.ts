@@ -2,7 +2,7 @@
  * @author Cian Ormond <co@cianormond.com>
  */
 
-import {activeUsers, sectors} from "../index";
+import {activeUsers, sectorData} from "../index";
 
 export let intervals: Map<string, NodeJS.Timer> = new Map<string, NodeJS.Timer>();
 
@@ -20,7 +20,7 @@ export function canFlagTimeout(sectorId: string): boolean {
  * @param sectorId Sector to flag for timeout
  */
 export function flagTimeout(sectorId: string) {
-    sectors[sectorId].timeoutFlagged = true;
+    sectorData[sectorId].timeoutFlagged = true;
     intervals.set(sectorId, setInterval(() => checkTimeoutCountdown(sectorId), 6000));
 }
 
@@ -31,7 +31,7 @@ export function flagTimeout(sectorId: string) {
 function checkTimeoutCountdown(sectorId: string) {
     const interval = intervals.get(sectorId);
 
-    if (!sectors[sectorId]?.timeoutFlagged) {
+    if (!sectorData[sectorId]?.timeoutFlagged) {
         clearInterval(interval);
         return;
     }
@@ -41,7 +41,7 @@ function checkTimeoutCountdown(sectorId: string) {
         return;
     }
 
-    const timeModified = sectors[sectorId].timeModified;
+    const timeModified = sectorData[sectorId].timeModified;
     if (Date.now() < timeModified + 1800) return;
     else {
         if (interval != undefined)
@@ -56,5 +56,5 @@ function checkTimeoutCountdown(sectorId: string) {
  */
 function timeout(sectorId: string, interval: NodeJS.Timer) {
     clearInterval(interval);
-    delete sectors[sectorId];
+    delete sectorData[sectorId];
 }

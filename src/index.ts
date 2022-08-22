@@ -4,7 +4,7 @@
 
 import express from 'express';
 import bodyParser from 'body-parser';
-import { Sector } from "./types/sector";
+import { SharedSectorData } from "./types/sharedSectorData";
 import socket from "./api/sockets";
 import { Server } from "http";
 import dotenv from "dotenv";
@@ -19,9 +19,9 @@ const port: number = 4000;
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-export let sectors: Record<string, Sector> = {};
+export const sectorData: Record<string, SharedSectorData> = {};
 
-export let activeUsers = new Map<string, string>();
+export const activeUsers = new Map<string, string>();
 
 // Use GET routes from api/get.ts
 app.use('/', require('./api/get.ts'));

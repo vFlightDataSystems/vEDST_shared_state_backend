@@ -4,7 +4,7 @@
 
 import { Server, Socket } from "socket.io";
 import { Server as HttpServer } from "http";
-import { activeUsers, sectors } from "../index";
+import { activeUsers, sectorData } from "../index";
 import { canFlagTimeout, flagTimeout } from "./sectorTimeout";
 import { AircraftDto } from "../types/aircraftDto";
 
@@ -36,30 +36,30 @@ export default function(server: HttpServer) {
             sectorId: sectorId as string
         };
 
-        if (!sectors[userInfo.sectorId]) {
-            sectors[userInfo.sectorId] = {
-                sectorId: userInfo.sectorId, timeModified: Date.now(), timeoutFlagged: false, aircraft: {}
+        if (!sectorData[userInfo.sectorId]) {
+            sectorData[userInfo.sectorId] = {
+                sectorId: userInfo.sectorId, timeModified: Date.now(), timeoutFlagged: false, aircraftData: {}
             };
         }
 
-        Object.values(sectors[userInfo.sectorId].aircraft).forEach(aircraft => emitAircraftToRoom(aircraft));
+        Object.values(sectorData[userInfo.sectorId].aircraftData).forEach(aircraft => emitAircraftToRoom(aircraft.aircraftId));
 
         socket.join(userInfo.sectorId);
 
         function emitAircraftToRoom(aircraftId: string) {
-            io.to(userInfo.sectorId).emit("receiveAircraft", sectors[userInfo.sectorId].aircraft[aircraftId])
+            io.to(userInfo.sectorId).emit("receiveAircraft", sectorData[userInfo.sectorId].aircraftData[aircraftId])
         }
 
         socket.on('updateAircraft', (sectorId, aircraft) => {
-                sectors[userInfo.sectorId].aircraft[aircraft.aircraftId] = aircraft;
+            sectorData[userInfo.sectorId].aircraftData[aircraft.aircraftId] = aircraft;
 
-            sectors[sectorId].timeModified = Date.now();
+            sectorData[sectorId].timeModified = Date.now();
             emitAircraftToRoom(aircraft.aircraftId);
         });
 
         socket.on('disconnect', () => {
-            if (sectors[userInfo.sectorId]) {
-                sectors[userInfo.sectorId].timeModified = Date.now();
+            if (sectorData[userInfo.sectorId]) {
+                sectorData[userInfo.sectorId].timeModified = Date.now();
                 if (canFlagTimeout(userInfo.sectorId)) {
                     flagTimeout(userInfo.sectorId);
                 }
