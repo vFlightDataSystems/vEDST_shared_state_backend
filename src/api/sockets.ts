@@ -72,9 +72,9 @@ export default function(server: HttpServer) {
             io.to(userInfo.sectorId).emit("receiveAircraft", sectorData[userInfo.sectorId].aircraftData[aircraftId]);
         }
 
-        socket.on('updateAircraft', (sectorId, aircraft) => {
+        socket.on('updateAircraft', (sectorId, payload) => {
             sectorData[sectorId].timeModified = Date.now();
-
+            const aircraft = new SharedAircraftDto(payload);
             if (!_.isEqual(sectorData[userInfo.sectorId].aircraftData[aircraft.aircraftId], aircraft)) {
                 sectorData[userInfo.sectorId].aircraftData[aircraft.aircraftId] = aircraft;
                 emitAircraftToRoom(aircraft.aircraftId);
