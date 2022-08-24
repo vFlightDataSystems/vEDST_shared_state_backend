@@ -36,6 +36,7 @@ interface ServerToClientEvents {
     receiveDepState: (value: SharedDepState) => void;
     receiveGpdState: (value: SharedGpdState) => void
     receivePlansDisplayState: (value: SharedPlansDisplayState) => void;
+    receiveBringWindowToFront: (window: EdstWindow) => void;
     receiveUiState: (value: SharedUiState) => void;
 }
 
@@ -109,24 +110,32 @@ export default function(server: HttpServer) {
                     if (sectorData[userInfo.sectorId].uiState.acl.open !== value) {
                         sectorData[userInfo.sectorId].uiState.acl.open = value;
                         io.to(userInfo.sectorId).emit("receiveAclState", sectorData[userInfo.sectorId].uiState.acl);
+                    } else {
+                        io.to(userInfo.sectorId).emit("receiveBringWindowToFront", window);
                     }
                     break;
                 case EdstWindow.DEP:
                     if (sectorData[userInfo.sectorId].uiState.dep.open !== value) {
                         sectorData[userInfo.sectorId].uiState.dep.open = value;
                         io.to(userInfo.sectorId).emit("receiveDepState", sectorData[userInfo.sectorId].uiState.dep);
+                    } else {
+                        io.to(userInfo.sectorId).emit("receiveBringWindowToFront", window);
                     }
                     break;
                 case EdstWindow.GPD:
                     if (sectorData[userInfo.sectorId].uiState.gpd.open !== value) {
                         sectorData[userInfo.sectorId].uiState.gpd.open = value;
                         io.to(userInfo.sectorId).emit("receiveGpdState", sectorData[userInfo.sectorId].uiState.gpd);
+                    } else {
+                        io.to(userInfo.sectorId).emit("receiveBringWindowToFront", window);
                     }
                     break;
                 case EdstWindow.PLANS_DISPLAY:
                     if (sectorData[userInfo.sectorId].uiState.plansDisplay.open !== value) {
                         sectorData[userInfo.sectorId].uiState.plansDisplay.open = value;
                         io.to(userInfo.sectorId).emit("receivePlansDisplayState", sectorData[userInfo.sectorId].uiState.plansDisplay);
+                    } else {
+                        io.to(userInfo.sectorId).emit("receiveBringWindowToFront", window);
                     }
                     break;
                 default: break;
