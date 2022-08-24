@@ -1,8 +1,14 @@
-import { AircraftDto } from "./aircraftDto";
+import { SharedAircraftDto } from "./sharedAircraftDto";
+import { SharedUiState } from "./sharedUiState";
 
-export type SharedSectorData = {
-  sectorId: string
-  timeModified: number
-  timeoutFlagged: boolean
-  aircraftData: Record<string, AircraftDto>;
+export class SharedSectorData {
+  constructor(sectorId: string) {
+    this.sectorId = sectorId;
+  }
+
+  sectorId = "";
+  timeModified = Date.now();
+  timeoutFlagged = false;
+  uiState = new SharedUiState();
+  aircraftData: Record<string, SharedAircraftDto> = {};
 }

@@ -1,5 +1,7 @@
-export type AircraftDto = {
-  aircraftId: string;
+import { AircraftId } from "./aircraftId";
+
+export type SharedAircraftDto = {
+  aircraftId: AircraftId;
   spa: boolean;
   aclDisplay: boolean;
   aclDeleted: boolean;
