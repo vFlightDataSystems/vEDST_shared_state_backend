@@ -4,7 +4,7 @@
 
 import express from 'express';
 import bodyParser from 'body-parser';
-import { SharedSectorData } from "./types/sharedSectorData";
+import { SharedSectorData } from "./typeDefinitions/types/sharedSectorData";
 import socket from "./api/sockets";
 import { Server } from "http";
 import dotenv from "dotenv";
