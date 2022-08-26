@@ -12,7 +12,7 @@ export const intervals = new Map<string, NodeJS.Timer>();
  */
 export function flagTimeout(sectorId: string) {
     sectorData[sectorId].timeoutFlagged = true;
-    intervals.set(sectorId, setInterval(() => checkTimeoutCountdown(sectorId), 6000));
+    intervals.set(sectorId, setInterval(() => checkTimeoutCountdown(sectorId), 60000));
 }
 
 /**

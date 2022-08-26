@@ -18,6 +18,7 @@ import { Plan } from "../typeDefinitions/types/plan";
 import { AclSortOption } from "../typeDefinitions/enums/aclSortOption";
 import { DepSortOption } from "../typeDefinitions/enums/depSortOption";
 import { sectorData } from "../index";
+import { Asel } from "../typeDefinitions/types/asel";
 
 interface ClientToServerEvents {
     updateAircraft: (sectorId: string, payload: SharedAircraftDto) => void;
@@ -27,6 +28,7 @@ interface ClientToServerEvents {
     setDepSort: (sortOption: DepSortOption) => void;
     setPlanQueue: (value: Plan[]) => void;
     setWindowIsOpen: (window: EdstWindow, value: boolean) => void;
+    setAircraftSelect: (asel: Asel | null) => void;
     clearPlanQueue: () => void;
 }
 
@@ -37,6 +39,7 @@ interface ServerToClientEvents {
     receiveGpdState: (value: SharedGpdState) => void
     receivePlansDisplayState: (value: SharedPlansDisplayState) => void;
     receiveBringWindowToFront: (window: EdstWindow) => void;
+    receiveAircraftSelect: (asel: Asel | null) => void;
     receiveUiState: (value: SharedUiState) => void;
 }
 
@@ -161,13 +164,20 @@ export default function(server: HttpServer) {
             }
         })
 
+        socket.on('setAircraftSelect', (asel) => {
+            if (sectorData[userInfo.sectorId].uiState.asel !== asel) {
+                sectorData[userInfo.sectorId].uiState.asel = asel;
+                io.to(userInfo.sectorId).emit("receiveAircraftSelect", asel);
+            }
+        })
+
         socket.on('clearPlanQueue', () => {
             sectorData[userInfo.sectorId].uiState.plansDisplay = new SharedPlansDisplayState();
             io.to(userInfo.sectorId).emit("receivePlansDisplayState", sectorData[userInfo.sectorId].uiState.plansDisplay);
         })
 
         socket.on('setAclManualPosting', (value) => {
-            if (sectorData[userInfo.sectorId].uiState.acl.manualPosting !== value) {
+            if (!_.isEqual(sectorData[userInfo.sectorId].uiState.acl.manualPosting, value)) {
                 sectorData[userInfo.sectorId].uiState.acl.manualPosting = value;
                 io.to(userInfo.sectorId).emit("receiveAclState", sectorData[userInfo.sectorId].uiState.acl);
             }
