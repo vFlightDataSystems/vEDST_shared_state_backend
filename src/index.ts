@@ -21,8 +21,6 @@ app.use(bodyParser.json());
 
 export const sectorData: Record<string, SharedSectorData> = {};
 
-export const activeUsers = new Map<string, string>();
-
 // Use GET routes from api/get.ts
 app.use('/', require('./api/get.ts'));
 // Use websocket code from api/sockets.ts

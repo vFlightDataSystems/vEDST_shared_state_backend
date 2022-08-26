@@ -4,8 +4,7 @@
 
 import { Server, Socket } from "socket.io";
 import { Server as HttpServer } from "http";
-import { activeUsers, sectorData } from "../index";
-import { canFlagTimeout, flagTimeout } from "./sectorTimeout";
+import { flagTimeout, intervals } from "./sectorTimeout";
 import { SharedAircraftDto } from "../typeDefinitions/types/sharedAircraftDto";
 import { SharedSectorData } from "../typeDefinitions/types/sharedSectorData";
 import { SharedAclState } from "../typeDefinitions/types/sharedAclState";
@@ -18,6 +17,7 @@ import { EdstWindow } from "../typeDefinitions/enums/edstWindow";
 import { Plan } from "../typeDefinitions/types/plan";
 import { AclSortOption } from "../typeDefinitions/enums/aclSortOption";
 import { DepSortOption } from "../typeDefinitions/enums/depSortOption";
+import { sectorData } from "../index";
 
 interface ClientToServerEvents {
     updateAircraft: (sectorId: string, payload: SharedAircraftDto) => void;
@@ -47,6 +47,25 @@ export default function(server: HttpServer) {
             origin: process.env.corsOrigin,
         }
     });
+
+    io.of("/").adapter.on("create-room", (room) => {
+        if (room.length < 6) {
+            sectorData[room] = new SharedSectorData(room);
+            const interval = intervals.get(room);
+            if (interval) {
+                clearInterval(interval);
+            }
+            console.log(`room ${room} was created`);
+        }
+    });
+
+    io.of("/").adapter.on("delete-room", (room) => {
+        if (sectorData[room]) {
+            flagTimeout(room);
+        }
+        console.log(`room ${room} was deleted`);
+    });
+
     io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>) => {
 
         const sectorId = socket.handshake.query.sectorId;
@@ -60,14 +79,14 @@ export default function(server: HttpServer) {
             sectorId: sectorId as string
         };
 
+        socket.join(userInfo.sectorId);
+
         if (!sectorData[userInfo.sectorId]) {
             sectorData[userInfo.sectorId] = new SharedSectorData(userInfo.sectorId);
         } else {
             Object.values(sectorData[userInfo.sectorId].aircraftData).forEach(aircraft => socket.emit("receiveAircraft", aircraft));
             socket.emit("receiveUiState", sectorData[userInfo.sectorId].uiState);
         }
-
-        socket.join(userInfo.sectorId);
 
         function emitAircraftToRoom(aircraftId: string) {
             io.to(userInfo.sectorId).emit("receiveAircraft", sectorData[userInfo.sectorId].aircraftData[aircraftId]);
@@ -160,15 +179,5 @@ export default function(server: HttpServer) {
                 io.to(userInfo.sectorId).emit("receiveDepState", sectorData[userInfo.sectorId].uiState.dep);
             }
         })
-
-        socket.on('disconnect', () => {
-            if (sectorData[userInfo.sectorId]) {
-                sectorData[userInfo.sectorId].timeModified = Date.now();
-                if (canFlagTimeout(userInfo.sectorId)) {
-                    flagTimeout(userInfo.sectorId);
-                }
-            }
-            activeUsers.delete(userInfo.id);
-        });
     });
 }

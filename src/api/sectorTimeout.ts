@@ -2,18 +2,9 @@
  * @author Cian Ormond <co@cianormond.com>
  */
 
-import {activeUsers, sectorData} from "../index";
+import {sectorData} from "../index";
 
-export let intervals: Map<string, NodeJS.Timer> = new Map<string, NodeJS.Timer>();
-
-/**
- * Checks if sectorId is ready to be flagged for timeout
- * @param sectorId Sector to flag for timeout
- * @returns
- */
-export function canFlagTimeout(sectorId: string): boolean {
-    return !activeUsers.has(sectorId);
-}
+export const intervals = new Map<string, NodeJS.Timer>();
 
 /**
  * Starts countdown to remove sectorId after 30 mins
@@ -36,16 +27,9 @@ function checkTimeoutCountdown(sectorId: string) {
         return;
     }
 
-    if (activeUsers.has(sectorId)) {
-        clearInterval(interval);
-        return;
-    }
-
     const timeModified = sectorData[sectorId].timeModified;
-    if (Date.now() < timeModified + 1800) return;
-    else {
-        if (interval != undefined)
-            timeout(sectorId, interval);
+    if (Date.now() > timeModified + 1800 * 1000 && interval !== undefined)  {
+        timeout(sectorId, interval);
     }
 }
 
