@@ -14,6 +14,11 @@ export class SharedAircraftDto {
     this.depHighlighted = data.depHighlighted
     this.freeTextContent = data.freeTextContent
     this.showFreeText = data.showFreeText
+    this.assignedSpeed = data.assignedSpeed
+    this.assignedHeading = data.assignedHeading
+    this.scratchpadHeading = data.scratchpadHeading
+    this.scratchpadSpeed = data.scratchpadSpeed
+    this.previousRoute = data.previousRoute
   }
   
   aircraftId: AircraftId = "";
@@ -26,6 +31,11 @@ export class SharedAircraftDto {
   depStatus: -1 | 0 | 1 = -1;
   aclHighlighted = false;
   depHighlighted = false;
+  assignedSpeed: string | null = null;
+  assignedHeading: string | null = null;
+  scratchpadHeading: string | null = null;
+  scratchpadSpeed: string | null = null;
+  previousRoute: string | null = null;
   freeTextContent: string = "";
   showFreeText = false;
 }

@@ -27,7 +27,8 @@ interface ClientToServerEvents {
     setDepManualPosting: (value: boolean) => void;
     setDepSort: (sortOption: DepSortOption) => void;
     setPlanQueue: (value: Plan[]) => void;
-    setWindowIsOpen: (window: EdstWindow, value: boolean) => void;
+    openWindow: (window: EdstWindow) => void;
+    closeWindow: (window: EdstWindow) => void;
     setAircraftSelect: (asel: Asel | null, eventId: string | null) => void;
     clearPlanQueue: () => void;
 }
@@ -38,7 +39,8 @@ interface ServerToClientEvents {
     receiveDepState: (value: SharedDepState) => void;
     receiveGpdState: (value: SharedGpdState) => void
     receivePlansDisplayState: (value: SharedPlansDisplayState) => void;
-    receiveBringWindowToFront: (window: EdstWindow) => void;
+    receiveOpenWindow: (window: EdstWindow) => void;
+    receiveCloseWindow: (window: EdstWindow) => void;
     receiveAircraftSelect: (asel: Asel | null, eventId: string | null) => void;
     receiveUiState: (value: SharedUiState) => void;
 }
@@ -126,46 +128,25 @@ export default function(server: HttpServer) {
             }
         })
 
-        socket.on('setWindowIsOpen', (window, value) => {
-            switch(window) {
-                case EdstWindow.ACL:
-                    if (sectorData[userInfo.sectorId].uiState.acl.open !== value) {
-                        sectorData[userInfo.sectorId].uiState.acl.open = value;
-                        io.to(userInfo.sectorId).emit("receiveAclState", sectorData[userInfo.sectorId].uiState.acl);
-                    } else {
-                        io.to(userInfo.sectorId).emit("receiveBringWindowToFront", window);
-                    }
-                    break;
-                case EdstWindow.DEP:
-                    if (sectorData[userInfo.sectorId].uiState.dep.open !== value) {
-                        sectorData[userInfo.sectorId].uiState.dep.open = value;
-                        io.to(userInfo.sectorId).emit("receiveDepState", sectorData[userInfo.sectorId].uiState.dep);
-                    } else {
-                        io.to(userInfo.sectorId).emit("receiveBringWindowToFront", window);
-                    }
-                    break;
-                case EdstWindow.GPD:
-                    if (sectorData[userInfo.sectorId].uiState.gpd.open !== value) {
-                        sectorData[userInfo.sectorId].uiState.gpd.open = value;
-                        io.to(userInfo.sectorId).emit("receiveGpdState", sectorData[userInfo.sectorId].uiState.gpd);
-                    } else {
-                        io.to(userInfo.sectorId).emit("receiveBringWindowToFront", window);
-                    }
-                    break;
-                case EdstWindow.PLANS_DISPLAY:
-                    if (sectorData[userInfo.sectorId].uiState.plansDisplay.open !== value) {
-                        sectorData[userInfo.sectorId].uiState.plansDisplay.open = value;
-                        io.to(userInfo.sectorId).emit("receivePlansDisplayState", sectorData[userInfo.sectorId].uiState.plansDisplay);
-                    } else {
-                        io.to(userInfo.sectorId).emit("receiveBringWindowToFront", window);
-                    }
-                    break;
-                default: break;
+        socket.on('openWindow', (window) => {
+            const index = sectorData[userInfo.sectorId].uiState.openWindows.indexOf(window);
+            if (index > -1) {
+                sectorData[userInfo.sectorId].uiState.openWindows.splice(index);
             }
+            sectorData[userInfo.sectorId].uiState.openWindows.push(window);
+            socket.to(userInfo.sectorId).emit("receiveOpenWindow", window);
+        });
+
+        socket.on('closeWindow', (window) => {
+            const index = sectorData[userInfo.sectorId].uiState.openWindows.indexOf(window);
+            if (index > -1) {
+                sectorData[userInfo.sectorId].uiState.openWindows.splice(index);
+            }
+            socket.to(userInfo.sectorId).emit("receiveCloseWindow", window);
         })
 
         socket.on('setAircraftSelect', (asel, eventId) => {
-            if (sectorData[userInfo.sectorId].uiState.asel !== asel) {
+            if (!_.isEqual(sectorData[userInfo.sectorId].uiState.asel, asel)) {
                 sectorData[userInfo.sectorId].uiState.asel = asel;
                 socket.to(userInfo.sectorId).emit("receiveAircraftSelect", asel, eventId);
             }
