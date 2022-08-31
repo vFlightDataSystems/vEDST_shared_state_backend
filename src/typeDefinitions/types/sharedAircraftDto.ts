@@ -1,9 +1,11 @@
 import { AircraftId } from "./aircraftId";
+import { AclRouteDisplayOption } from "../enums/aclRouteDisplayOption";
 
 export class SharedAircraftDto {
   constructor(data: SharedAircraftDto) {
     this.aircraftId = data.aircraftId
     this.spa = data.spa
+    this.remarksChecked = data.remarksChecked
     this.aclDisplay = data.aclDisplay
     this.aclDeleted = data.aclDeleted
     this.depDisplay = data.depDisplay
@@ -19,6 +21,7 @@ export class SharedAircraftDto {
     this.scratchpadHeading = data.scratchpadHeading
     this.scratchpadSpeed = data.scratchpadSpeed
     this.previousRoute = data.previousRoute
+    this.aclRouteDisplay = data.aclRouteDisplay
   }
   
   aircraftId: AircraftId = "";
@@ -38,4 +41,6 @@ export class SharedAircraftDto {
   previousRoute: string | null = null;
   freeTextContent: string = "";
   showFreeText = false;
+  remarksChecked = false;
+  aclRouteDisplay: AclRouteDisplayOption | null = null;
 }

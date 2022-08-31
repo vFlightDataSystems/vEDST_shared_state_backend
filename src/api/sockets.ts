@@ -15,22 +15,24 @@ import { SharedUiState } from "../typeDefinitions/types/sharedUiState";
 import _ from "lodash";
 import { EdstWindow } from "../typeDefinitions/enums/edstWindow";
 import { Plan } from "../typeDefinitions/types/plan";
-import { AclSortOption } from "../typeDefinitions/enums/aclSortOption";
-import { DepSortOption } from "../typeDefinitions/enums/depSortOption";
 import { sectorData } from "../index";
 import { Asel } from "../typeDefinitions/types/asel";
+import { SharedUiEvent } from "../typeDefinitions/types/sharedUiEvent";
+import { AclSortOption } from "../typeDefinitions/enums/aclSortOption";
+import { DepSortOption } from "../typeDefinitions/enums/depSortOption";
 
 interface ClientToServerEvents {
     updateAircraft: (sectorId: string, payload: SharedAircraftDto) => void;
+    setPlanQueue: (value: Plan[]) => void;
     setAclSort: (sortOption: AclSortOption, sector: boolean) => void;
     setAclManualPosting: (value: boolean) => void;
     setDepManualPosting: (value: boolean) => void;
     setDepSort: (sortOption: DepSortOption) => void;
-    setPlanQueue: (value: Plan[]) => void;
-    openWindow: (window: EdstWindow) => void;
-    closeWindow: (window: EdstWindow) => void;
     setAircraftSelect: (asel: Asel | null, eventId: string | null) => void;
+    openWindow: (window: EdstWindow) => void
+    closeWindow: (window: EdstWindow) => void
     clearPlanQueue: () => void;
+    dispatchUiEvent: (eventId: SharedUiEvent) => void;
 }
 
 interface ServerToClientEvents {
@@ -43,6 +45,7 @@ interface ServerToClientEvents {
     receiveCloseWindow: (window: EdstWindow) => void;
     receiveAircraftSelect: (asel: Asel | null, eventId: string | null) => void;
     receiveUiState: (value: SharedUiState) => void;
+    receiveUiEvent: (eventId: SharedUiEvent) => void;
 }
 
 export default function(server: HttpServer) {
@@ -169,6 +172,10 @@ export default function(server: HttpServer) {
                 sectorData[userInfo.sectorId].uiState.dep.manualPosting = value;
                 socket.to(userInfo.sectorId).emit("receiveDepState", sectorData[userInfo.sectorId].uiState.dep);
             }
+        })
+
+        socket.on('dispatchUiEvent', event => {
+            socket.to(userInfo.sectorId).emit("receiveUiEvent", event);
         })
     });
 }
