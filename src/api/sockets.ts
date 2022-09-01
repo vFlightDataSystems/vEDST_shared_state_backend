@@ -7,27 +7,23 @@ import { Server as HttpServer } from "http";
 import { flagTimeout, intervals } from "./sectorTimeout";
 import { SharedAircraftDto } from "../typeDefinitions/types/sharedAircraftDto";
 import { SharedSectorData } from "../typeDefinitions/types/sharedSectorData";
-import { SharedAclState } from "../typeDefinitions/types/sharedAclState";
-import { SharedDepState } from "../typeDefinitions/types/sharedDepState";
-import { SharedGpdState } from "../typeDefinitions/types/sharedGpdState";
-import { SharedPlansDisplayState } from "../typeDefinitions/types/sharedPlansDisplayState";
 import { SharedUiState } from "../typeDefinitions/types/sharedUiState";
 import _ from "lodash";
 import { EdstWindow } from "../typeDefinitions/enums/edstWindow";
-import { Plan } from "../typeDefinitions/types/plan";
 import { sectorData } from "../index";
 import { Asel } from "../typeDefinitions/types/asel";
 import { SharedUiEvent } from "../typeDefinitions/types/sharedUiEvent";
-import { AclSortOption } from "../typeDefinitions/enums/aclSortOption";
-import { DepSortOption } from "../typeDefinitions/enums/depSortOption";
+import { AclState } from "../typeDefinitions/types/aclState";
+import { DepState } from "../typeDefinitions/types/depState";
+import { PlanState } from "../typeDefinitions/types/planState";
+import { GpdState } from "../typeDefinitions/types/gpdState";
 
 interface ClientToServerEvents {
     updateAircraft: (sectorId: string, payload: SharedAircraftDto) => void;
-    setPlanQueue: (value: Plan[]) => void;
-    setAclSort: (sortOption: AclSortOption, sector: boolean) => void;
-    setAclManualPosting: (value: boolean) => void;
-    setDepManualPosting: (value: boolean) => void;
-    setDepSort: (sortOption: DepSortOption) => void;
+    setAclState: (value: AclState) => void;
+    setDepState: (value: DepState) => void;
+    setGpdState: (value: GpdState) => void;
+    setPlanState: (value: PlanState) => void;
     setAircraftSelect: (asel: Asel | null, eventId: string | null) => void;
     openWindow: (window: EdstWindow) => void
     closeWindow: (window: EdstWindow) => void
@@ -36,11 +32,11 @@ interface ClientToServerEvents {
 }
 
 interface ServerToClientEvents {
-    receiveAircraft: (aircraft: SharedAircraftDto) => void
-    receiveAclState: (value: SharedAclState) => void;
-    receiveDepState: (value: SharedDepState) => void;
-    receiveGpdState: (value: SharedGpdState) => void
-    receivePlansDisplayState: (value: SharedPlansDisplayState) => void;
+    receiveAircraft: (aircraft: SharedAircraftDto) => void;
+    receiveAclState: (value: AclState) => void;
+    receiveDepState: (value: DepState) => void;
+    receiveGpdState: (value: GpdState) => void;
+    receivePlansDisplayState: (value: PlanState) => void;
     receiveOpenWindow: (window: EdstWindow) => void;
     receiveCloseWindow: (window: EdstWindow) => void;
     receiveAircraftSelect: (asel: Asel | null, eventId: string | null) => void;
@@ -109,25 +105,31 @@ export default function(server: HttpServer) {
             }
         });
 
-        socket.on('setAclSort', (selectedOption, sector) => {
-            if (sectorData[userInfo.sectorId].uiState.acl.sortOption !== selectedOption || sectorData[userInfo.sectorId].uiState.acl.sortSector !== sector) {
-                sectorData[userInfo.sectorId].uiState.acl.sortOption = selectedOption;
-                sectorData[userInfo.sectorId].uiState.acl.sortSector = sector;
-                socket.to(userInfo.sectorId).emit('receiveAclState', sectorData[userInfo.sectorId].uiState.acl);
+        socket.on('setAclState', (value) => {
+            if (!_.isEqual(sectorData[userInfo.sectorId].uiState.acl, value)) {
+                sectorData[userInfo.sectorId].uiState.acl = value;
+                socket.to(userInfo.sectorId).emit("receiveAclState", value);
             }
         })
 
-        socket.on('setDepSort', (selectedOption) => {
-            if (sectorData[userInfo.sectorId].uiState.dep.sortOption !== selectedOption) {
-                sectorData[userInfo.sectorId].uiState.dep.sortOption = selectedOption;
-                socket.to(userInfo.sectorId).emit('receiveDepState', sectorData[userInfo.sectorId].uiState.dep);
+        socket.on('setDepState', (value) => {
+            if (!_.isEqual(sectorData[userInfo.sectorId].uiState.acl, value)) {
+                sectorData[userInfo.sectorId].uiState.dep = value;
+                socket.to(userInfo.sectorId).emit("receiveDepState", value);
             }
         })
 
-        socket.on('setPlanQueue', (queue) => {
-            if (!_.isEqual(sectorData[userInfo.sectorId].uiState.plansDisplay.planQueue, queue)) {
-                sectorData[userInfo.sectorId].uiState.plansDisplay.planQueue = queue;
-                socket.to(userInfo.sectorId).emit('receivePlansDisplayState', sectorData[userInfo.sectorId].uiState.plansDisplay);
+        socket.on('setGpdState', (value) => {
+            if (!_.isEqual(sectorData[userInfo.sectorId].uiState.acl, value)) {
+                sectorData[userInfo.sectorId].uiState.gpd = value;
+                socket.to(userInfo.sectorId).emit("receiveGpdState", value);
+            }
+        })
+
+        socket.on('setPlanState', (value) => {
+            if (!_.isEqual(sectorData[userInfo.sectorId].uiState.acl, value)) {
+                sectorData[userInfo.sectorId].uiState.plansDisplay = value;
+                socket.to(userInfo.sectorId).emit("receivePlansDisplayState", value);
             }
         })
 
@@ -155,27 +157,8 @@ export default function(server: HttpServer) {
             }
         })
 
-        socket.on('clearPlanQueue', () => {
-            sectorData[userInfo.sectorId].uiState.plansDisplay = new SharedPlansDisplayState();
-            socket.to(userInfo.sectorId).emit("receivePlansDisplayState", sectorData[userInfo.sectorId].uiState.plansDisplay);
-        })
-
-        socket.on('setAclManualPosting', (value) => {
-            if (!_.isEqual(sectorData[userInfo.sectorId].uiState.acl.manualPosting, value)) {
-                sectorData[userInfo.sectorId].uiState.acl.manualPosting = value;
-                socket.to(userInfo.sectorId).emit("receiveAclState", sectorData[userInfo.sectorId].uiState.acl);
-            }
-        })
-
-        socket.on('setDepManualPosting', (value) => {
-            if (sectorData[userInfo.sectorId].uiState.dep.manualPosting !== value) {
-                sectorData[userInfo.sectorId].uiState.dep.manualPosting = value;
-                socket.to(userInfo.sectorId).emit("receiveDepState", sectorData[userInfo.sectorId].uiState.dep);
-            }
-        })
-
-        socket.on('dispatchUiEvent', event => {
-            socket.to(userInfo.sectorId).emit("receiveUiEvent", event);
+        socket.on('dispatchUiEvent', eventId => {
+            socket.to(userInfo.sectorId).emit("receiveUiEvent", eventId);
         })
     });
 }
