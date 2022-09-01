@@ -22,9 +22,13 @@ export class SharedAircraftDto {
     this.scratchpadSpeed = data.scratchpadSpeed
     this.previousRoute = data.previousRoute
     this.aclRouteDisplay = data.aclRouteDisplay
+    this.keep = data.keep
+    this.pendingRemoval = data.pendingRemoval
+    this.boundaryTime = data.boundaryTime
   }
   
   aircraftId: AircraftId = "";
+  keep = false;
   spa = false;
   aclDisplay = false;
   aclDeleted = false;
@@ -42,5 +46,7 @@ export class SharedAircraftDto {
   freeTextContent: string = "";
   showFreeText = false;
   remarksChecked = false;
+  pendingRemoval: number | null = null;
+  boundaryTime = 0;
   aclRouteDisplay: AclRouteDisplayOption | null = null;
 }
