@@ -12,7 +12,6 @@ import _ from "lodash";
 import { EdstWindow } from "../typeDefinitions/enums/edstWindow";
 import { sectorData } from "../index";
 import { Asel } from "../typeDefinitions/types/asel";
-import { SharedUiEvent } from "../typeDefinitions/types/sharedUiEvent";
 import { AclState } from "../typeDefinitions/types/aclState";
 import { DepState } from "../typeDefinitions/types/depState";
 import { PlanState } from "../typeDefinitions/types/planState";
@@ -28,7 +27,7 @@ interface ClientToServerEvents {
     openWindow: (window: EdstWindow) => void
     closeWindow: (window: EdstWindow) => void
     clearPlanQueue: () => void;
-    dispatchUiEvent: (eventId: SharedUiEvent) => void;
+    dispatchUiEvent: (eventId: string) => void;
 }
 
 interface ServerToClientEvents {
@@ -41,7 +40,7 @@ interface ServerToClientEvents {
     receiveCloseWindow: (window: EdstWindow) => void;
     receiveAircraftSelect: (asel: Asel | null, eventId: string | null) => void;
     receiveUiState: (value: SharedUiState) => void;
-    receiveUiEvent: (eventId: SharedUiEvent) => void;
+    receiveUiEvent: (eventId: string) => void;
 }
 
 export default function(server: HttpServer) {
