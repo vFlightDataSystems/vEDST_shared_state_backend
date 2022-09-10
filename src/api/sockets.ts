@@ -27,7 +27,7 @@ interface ClientToServerEvents {
     openWindow: (window: EdstWindow) => void
     closeWindow: (window: EdstWindow) => void
     clearPlanQueue: () => void;
-    dispatchUiEvent: (eventId: string) => void;
+    dispatchUiEvent: (eventId: string, arg?: any) => void;
 }
 
 interface ServerToClientEvents {
@@ -40,7 +40,7 @@ interface ServerToClientEvents {
     receiveCloseWindow: (window: EdstWindow) => void;
     receiveAircraftSelect: (asel: Asel | null, eventId: string | null) => void;
     receiveUiState: (value: SharedUiState) => void;
-    receiveUiEvent: (eventId: string) => void;
+    receiveUiEvent: (eventId: string, arg?: any) => void;
 }
 
 export default function(server: HttpServer) {
@@ -156,8 +156,8 @@ export default function(server: HttpServer) {
             }
         })
 
-        socket.on('dispatchUiEvent', eventId => {
-            socket.to(userInfo.sectorId).emit("receiveUiEvent", eventId);
+        socket.on('dispatchUiEvent', (eventId, arg) => {
+            socket.to(userInfo.sectorId).emit("receiveUiEvent", eventId, arg);
         })
     });
 }
