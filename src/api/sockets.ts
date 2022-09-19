@@ -18,7 +18,7 @@ import { PlanState } from "../typeDefinitions/types/planState";
 import { GpdState } from "../typeDefinitions/types/gpdState";
 
 interface ClientToServerEvents {
-    updateAircraft: (sectorId: string, payload: SharedAircraftDto) => void;
+    updateAircraft: (payload: SharedAircraftDto) => void;
     setAclState: (value: AclState) => void;
     setDepState: (value: DepState) => void;
     setGpdState: (value: GpdState) => void;
@@ -71,93 +71,93 @@ export default function(server: HttpServer) {
 
     io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>) => {
 
+        const artccId = socket.handshake.query.artccId;
         const sectorId = socket.handshake.query.sectorId;
-
-        if (socket.handshake.auth?.token !== process.env.authToken || !(typeof sectorId === "string")) {
+        
+        if (socket.handshake.auth?.token !== process.env.authToken || !(typeof artccId === "string" && typeof sectorId === "string")) {
             socket.disconnect();
         }
 
         const userInfo = {
             id: socket.id,
-            sectorId: sectorId as string
+            sectorId: sectorId as string,
+            artccId: artccId as string
         };
+        const positionId = `${userInfo.artccId}-${userInfo.sectorId}`;
 
+        socket.join(positionId);
         socket.join(userInfo.sectorId);
 
-        if (!sectorData[userInfo.sectorId]) {
-            sectorData[userInfo.sectorId] = new SharedSectorData(userInfo.sectorId);
+        if (!sectorData[positionId]) {
+            sectorData[positionId] = new SharedSectorData(positionId);
         } else {
-            Object.values(sectorData[userInfo.sectorId].aircraftData).forEach(aircraft => socket.emit("receiveAircraft", aircraft));
-            socket.emit("receiveUiState", sectorData[userInfo.sectorId].uiState);
+            Object.values(sectorData[positionId].aircraftData).forEach(aircraft => socket.emit("receiveAircraft", aircraft));
+            socket.emit("receiveUiState", sectorData[positionId].uiState);
         }
 
-        function emitAircraftToRoom(aircraftId: string) {
-            socket.to(userInfo.sectorId).emit("receiveAircraft", sectorData[userInfo.sectorId].aircraftData[aircraftId]);
-        }
-
-        socket.on('updateAircraft', (sectorId, payload) => {
-            sectorData[sectorId].timeModified = Date.now();
+        socket.on('updateAircraft', payload => {
+            sectorData[positionId].timeModified = Date.now();
             const aircraft = new SharedAircraftDto(payload);
-            if (!_.isEqual(sectorData[userInfo.sectorId].aircraftData[aircraft.aircraftId], aircraft)) {
-                sectorData[userInfo.sectorId].aircraftData[aircraft.aircraftId] = aircraft;
-                emitAircraftToRoom(aircraft.aircraftId);
+            if (!_.isEqual(sectorData[positionId].aircraftData[aircraft.aircraftId], aircraft)) {
+                sectorData[positionId].aircraftData[aircraft.aircraftId] = aircraft;
+                socket.to(positionId).emit("receiveAircraft", aircraft);
             }
         });
 
         socket.on('setAclState', (value) => {
-            if (!_.isEqual(sectorData[userInfo.sectorId].uiState.acl, value)) {
-                sectorData[userInfo.sectorId].uiState.acl = value;
-                socket.to(userInfo.sectorId).emit("receiveAclState", value);
+            if (!_.isEqual(sectorData[positionId].uiState.acl, value)) {
+                sectorData[positionId].uiState.acl = value;
+                socket.to(positionId).emit("receiveAclState", value);
             }
         })
 
         socket.on('setDepState', (value) => {
-            if (!_.isEqual(sectorData[userInfo.sectorId].uiState.acl, value)) {
-                sectorData[userInfo.sectorId].uiState.dep = value;
-                socket.to(userInfo.sectorId).emit("receiveDepState", value);
+            if (!_.isEqual(sectorData[positionId].uiState.acl, value)) {
+                sectorData[positionId].uiState.dep = value;
+                socket.to(positionId).emit("receiveDepState", value);
             }
         })
 
         socket.on('setGpdState', (value) => {
-            if (!_.isEqual(sectorData[userInfo.sectorId].uiState.acl, value)) {
-                sectorData[userInfo.sectorId].uiState.gpd = value;
-                socket.to(userInfo.sectorId).emit("receiveGpdState", value);
+            if (!_.isEqual(sectorData[positionId].uiState.acl, value)) {
+                sectorData[positionId].uiState.gpd = value;
+                socket.to(positionId).emit("receiveGpdState", value);
             }
         })
 
         socket.on('setPlanState', (value) => {
-            if (!_.isEqual(sectorData[userInfo.sectorId].uiState.acl, value)) {
-                sectorData[userInfo.sectorId].uiState.plansDisplay = value;
-                socket.to(userInfo.sectorId).emit("receivePlansDisplayState", value);
+            if (!_.isEqual(sectorData[positionId].uiState.acl, value)) {
+                sectorData[positionId].uiState.plansDisplay = value;
+                socket.to(positionId).emit("receivePlansDisplayState", value);
             }
         })
 
         socket.on('openWindow', (window) => {
-            const index = sectorData[userInfo.sectorId].uiState.openWindows.indexOf(window);
+            const index = sectorData[positionId].uiState.openWindows.indexOf(window);
             if (index > -1) {
-                sectorData[userInfo.sectorId].uiState.openWindows.splice(index);
+                sectorData[positionId].uiState.openWindows.splice(index);
             }
-            sectorData[userInfo.sectorId].uiState.openWindows.push(window);
-            socket.to(userInfo.sectorId).emit("receiveOpenWindow", window);
+            sectorData[positionId].uiState.openWindows.push(window);
+            socket.to(positionId).emit("receiveOpenWindow", window);
         });
 
         socket.on('closeWindow', (window) => {
-            const index = sectorData[userInfo.sectorId].uiState.openWindows.indexOf(window);
+            const index = sectorData[positionId].uiState.openWindows.indexOf(window);
             if (index > -1) {
-                sectorData[userInfo.sectorId].uiState.openWindows.splice(index);
+                sectorData[positionId].uiState.openWindows.splice(index);
             }
-            socket.to(userInfo.sectorId).emit("receiveCloseWindow", window);
+            socket.to(positionId).emit("receiveCloseWindow", window);
         })
 
         socket.on('setAircraftSelect', (asel, eventId) => {
-            if (!_.isEqual(sectorData[userInfo.sectorId].uiState.asel, asel)) {
-                sectorData[userInfo.sectorId].uiState.asel = asel;
-                socket.to(userInfo.sectorId).emit("receiveAircraftSelect", asel, eventId);
+            if (!_.isEqual(sectorData[positionId].uiState.asel, asel)) {
+                sectorData[positionId].uiState.asel = asel;
+                socket.to(positionId).emit("receiveAircraftSelect", asel, eventId);
             }
         })
 
         socket.on('dispatchUiEvent', (eventId, arg) => {
-            socket.to(userInfo.sectorId).emit("receiveUiEvent", eventId, arg);
+            socket.to(positionId).emit("receiveUiEvent", eventId, arg);
         })
     });
 }
