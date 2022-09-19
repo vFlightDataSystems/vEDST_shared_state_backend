@@ -28,6 +28,7 @@ interface ClientToServerEvents {
     closeWindow: (window: EdstWindow) => void
     clearPlanQueue: () => void;
     dispatchUiEvent: (eventId: string, arg?: any) => void;
+    sendGIMessage: (recipient: string, message: string) => void;
 }
 
 interface ServerToClientEvents {
@@ -41,6 +42,7 @@ interface ServerToClientEvents {
     receiveAircraftSelect: (asel: Asel | null, eventId: string | null) => void;
     receiveUiState: (value: SharedUiState) => void;
     receiveUiEvent: (eventId: string, arg?: any) => void;
+    receiveGIMessage: (sender: string, message: string) => void;
 }
 
 export default function(server: HttpServer) {
@@ -52,7 +54,7 @@ export default function(server: HttpServer) {
     });
 
     io.of("/").adapter.on("create-room", (room) => {
-        if (room.length < 6) {
+        if (room.match(/^[A-Z]{3}-\d{2}$/)) {
             sectorData[room] = new SharedSectorData(room);
             const interval = intervals.get(room);
             if (interval) {
@@ -139,7 +141,7 @@ export default function(server: HttpServer) {
             }
             sectorData[positionId].uiState.openWindows.push(window);
             socket.to(positionId).emit("receiveOpenWindow", window);
-        });
+        })
 
         socket.on('closeWindow', (window) => {
             const index = sectorData[positionId].uiState.openWindows.indexOf(window);
@@ -158,6 +160,13 @@ export default function(server: HttpServer) {
 
         socket.on('dispatchUiEvent', (eventId, arg) => {
             socket.to(positionId).emit("receiveUiEvent", eventId, arg);
+        })
+
+        socket.on('sendGIMessage', (recipient, message) => {
+            if (recipient.length === 2) {
+                recipient = `${userInfo.artccId}-${recipient}`;
+            }
+            io.to(recipient).emit("receiveGIMessage", userInfo.sectorId, message);
         })
     });
 }
