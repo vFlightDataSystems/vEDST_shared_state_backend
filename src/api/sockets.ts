@@ -28,7 +28,7 @@ interface ClientToServerEvents {
     closeWindow: (window: EdstWindow) => void
     clearPlanQueue: () => void;
     dispatchUiEvent: (eventId: string, arg?: any) => void;
-    sendGIMessage: (recipient: string, message: string) => void;
+    sendGIMessage: (recipient: string, message: string, callback: (rejectReason?: string) => void) => void;
 }
 
 interface ServerToClientEvents {
@@ -87,8 +87,8 @@ export default function(server: HttpServer) {
         };
         const positionId = `${userInfo.artccId}-${userInfo.sectorId}`;
 
+        socket.join(userInfo.artccId);
         socket.join(positionId);
-        socket.join(userInfo.sectorId);
 
         if (!sectorData[positionId]) {
             sectorData[positionId] = new SharedSectorData(positionId);
@@ -162,11 +162,19 @@ export default function(server: HttpServer) {
             socket.to(positionId).emit("receiveUiEvent", eventId, arg);
         })
 
-        socket.on('sendGIMessage', (recipient, message) => {
-            if (recipient.length === 2) {
-                recipient = `${userInfo.artccId}-${recipient}`;
+        socket.on('sendGIMessage', (recipient, message, callback) => {
+            let recipientId;
+            if (recipient === "C") {
+                recipientId = userInfo.artccId;
+            } else {
+                recipientId = `${userInfo.artccId}-${recipient}`;
             }
-            io.to(recipient).emit("receiveGIMessage", userInfo.sectorId, message);
+            if (recipientId !== null && io.of('/').adapter.rooms.has(recipientId)) {
+                io.to(recipientId).emit("receiveGIMessage", userInfo.sectorId, message);
+                callback();
+            } else {
+                callback("SECTOR NOT ADAPTED");
+            }
         })
     });
 }
