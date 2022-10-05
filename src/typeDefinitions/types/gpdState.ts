@@ -39,6 +39,14 @@ type AircraftDisplayOptions = {
 type GpdConfiguration = Record<string, unknown> | null;
 
 export class GpdState {
+  constructor(data: GpdState) {
+    this.gpdConfiguration = data.gpdConfiguration;
+    this.mapFeatureOptions = data.mapFeatureOptions;
+    this.aircraftDisplayOptions = data.aircraftDisplayOptions;
+    this.suppressed = data.suppressed;
+    this.planData = data.planData;
+  }
+
   gpdConfiguration: GpdConfiguration = null;
   mapFeatureOptions: MapFeatureOptions = {
     [MapFeatureOption.lowSectors]: true,

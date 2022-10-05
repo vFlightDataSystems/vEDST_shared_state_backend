@@ -114,21 +114,21 @@ export default function(server: HttpServer) {
         })
 
         socket.on('setDepState', (value) => {
-            if (!_.isEqual(sectorData[positionId].uiState.acl, value)) {
+            if (!_.isEqual(sectorData[positionId].uiState.dep, value)) {
                 sectorData[positionId].uiState.dep = value;
                 socket.to(positionId).emit("receiveDepState", value);
             }
         })
 
         socket.on('setGpdState', (value) => {
-            if (!_.isEqual(sectorData[positionId].uiState.acl, value)) {
-                sectorData[positionId].uiState.gpd = value;
+            if (!_.isEqual(sectorData[positionId].uiState.gpd, value)) {
+                sectorData[positionId].uiState.gpd = new GpdState(value);
                 socket.to(positionId).emit("receiveGpdState", value);
             }
         })
 
         socket.on('setPlanState', (value) => {
-            if (!_.isEqual(sectorData[positionId].uiState.acl, value)) {
+            if (!_.isEqual(sectorData[positionId].uiState.plansDisplay, value)) {
                 sectorData[positionId].uiState.plansDisplay = value;
                 socket.to(positionId).emit("receivePlansDisplayState", value);
             }
