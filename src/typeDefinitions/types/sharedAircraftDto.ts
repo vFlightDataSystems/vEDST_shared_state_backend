@@ -1,5 +1,5 @@
 import { AircraftId } from "./aircraftId";
-import { AclRouteDisplayOption } from "../enums/aclRouteDisplayOption";
+import {RouteDisplayOption} from "./routeDisplayOption";
 
 export class SharedAircraftDto {
   constructor(data: SharedAircraftDto) {
@@ -40,5 +40,5 @@ export class SharedAircraftDto {
   remarksChecked = false;
   pendingRemoval: number | null = null;
   boundaryTime = 0;
-  aclRouteDisplay: AclRouteDisplayOption | null = null;
+  aclRouteDisplay: RouteDisplayOption | null = null;
 }

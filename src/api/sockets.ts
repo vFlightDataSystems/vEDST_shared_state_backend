@@ -9,13 +9,13 @@ import { SharedAircraftDto } from "../typeDefinitions/types/sharedAircraftDto";
 import { SharedSectorData } from "../typeDefinitions/types/sharedSectorData";
 import { SharedUiState } from "../typeDefinitions/types/sharedUiState";
 import _ from "lodash";
-import { EdstWindow } from "../typeDefinitions/enums/edstWindow";
 import { sectorData } from "../index";
 import { Asel } from "../typeDefinitions/types/asel";
-import { AclState } from "../typeDefinitions/types/aclState";
-import { DepState } from "../typeDefinitions/types/depState";
+import { AclState } from "../typeDefinitions/types/acl/aclState";
+import { DepState } from "../typeDefinitions/types/dep/depState";
 import { PlanState } from "../typeDefinitions/types/planState";
 import { GpdState } from "../typeDefinitions/types/gpdState";
+import {EdstWindow} from "../typeDefinitions/types/edstWindow";
 
 interface ClientToServerEvents {
     updateAircraft: (payload: SharedAircraftDto) => void;
